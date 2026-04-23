@@ -13,7 +13,7 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          path: ./extra-assignment-1-sperdue7567
+          path: .
           format: cyclonedx-json
           output-file: sbom.json
 
