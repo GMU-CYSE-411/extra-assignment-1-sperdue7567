@@ -1,26 +1,23 @@
-(function setupFixationHelper() {
-  const params = new URLSearchParams(window.location.search);
-  const fixedSession = params.get("sid");
-
-  if (fixedSession) {
-    document.cookie = `sid=${fixedSession}; path=/`;
-  }
-})();
-
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const outputEl = document.getElementById("login-output");
+  
   const formData = new FormData(event.currentTarget);
   const payload = Object.fromEntries(formData.entries());
 
   try {
     const result = await api("/api/login", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload)
     });
 
-    writeJson("login-output", result);
+    outputEl.textContent = JSON.stringify({ message: "Login successful" }, null, 2);
   } catch (error) {
-    writeJson("login-output", { error: error.message });
+    outputEl.textContent = JSON.stringify({ error: "Login failed" }, null, 2);
+    console.error(error);
   }
 });
