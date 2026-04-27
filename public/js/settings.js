@@ -1,21 +1,44 @@
+function renderStatusPreview(displayName, statusMessage) {
+  const preview = document.getElementById("status-preview");
+  preview.innerHTML = "";
+
+  const nameEl = document.createElement("p");
+  const strong = document.createElement("strong");
+  strong.textContent = displayName;
+
+  nameEl.appendChild(strong);
+
+  const statusEl = document.createElement("p");
+  statusEl.textContent = statusMessage;
+
+  preview.appendChild(nameEl);
+  preview.appendChild(statusEl);
+}
+
 async function loadSettings(userId) {
   const result = await api(`/api/settings?userId=${encodeURIComponent(userId)}`);
   const settings = result.settings;
-
-  document.getElementById("settings-form-user-id").value = settings.userId;
-  document.getElementById("settings-user-id").value = settings.userId;
+  
+  
+  
+  //document.getElementById("settings-form-user-id").value = settings.userId;
+  //document.getElementById("settings-user-id").value = settings.userId;
 
   const form = document.getElementById("settings-form");
   form.elements.displayName.value = settings.displayName;
   form.elements.theme.value = settings.theme;
   form.elements.statusMessage.value = settings.statusMessage;
   form.elements.emailOptIn.checked = Boolean(settings.emailOptIn);
-  document.getElementById("status-preview").innerHTML = `
-    <p><strong>${settings.displayName}</strong></p>
-    <p>${settings.statusMessage}</p>
-  `;
 
-  writeJson("settings-output", settings);
+  renderStatusPreview(setting.displayName, settings.statusMessage);
+  
+  document.getElementById("status-preview").textContent = 
+    JSON.stringify({
+      displayName: settings.displayName,
+      theme: settings.theme,
+      emailOptIn: settings.emailOptIn
+      }, null, 2);
+  
 }
 
 (async function bootstrapSettings() {
@@ -23,8 +46,10 @@ async function loadSettings(userId) {
     const user = await loadCurrentUser();
 
     if (!user) {
-      writeJson("settings-output", { error: "Please log in first." });
-      return;
+      document.getElementById("settings-output").textContent = 
+        JSON.stringify({ error: "Failed to load settings." }, null, 2);
+      console.error(error);
+      
     }
 
     await loadSettings(user.id);
@@ -33,18 +58,14 @@ async function loadSettings(userId) {
   }
 })();
 
-document.getElementById("settings-query-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const formData = new FormData(event.currentTarget);
-  await loadSettings(formData.get("userId"));
-});
+
 
 document.getElementById("settings-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(event.currentTarget);
   const payload = {
-    userId: formData.get("userId"),
+    //userId: formData.get("userId"),
     displayName: formData.get("displayName"),
     theme: formData.get("theme"),
     statusMessage: formData.get("statusMessage"),
@@ -53,19 +74,28 @@ document.getElementById("settings-form").addEventListener("submit", async (event
 
   const result = await api("/api/settings", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
-  writeJson("settings-output", result);
-  await loadSettings(payload.userId);
+  document.getElementById("settings-output").textContent = 
+    JSON.stringify({ success: true }, null, 2);
+  
+  await loadSettings(p);
 });
 
-document.getElementById("enable-email").addEventListener("click", async () => {
-  const result = await api("/api/settings/toggle-email?enabled=1");
-  writeJson("settings-output", result);
-});
+async function toggleEmail(enabled) {
+  const result = await api("/api/settings/toggle-email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ enabled }),
+  });
 
-document.getElementById("disable-email").addEventListener("click", async () => {
-  const result = await api("/api/settings/toggle-email?enabled=0");
-  writeJson("settings-output", result);
-});
+  document.getElementById("settings-output").textContent = 
+    JSON.stringify({ success: true }, null, 2);
+}
+
+document.getElementById("enable-e,ail").addEventListener("click", () => toggleEmail(true));
+document.getElementById("disable-email").addEventListener("click", () => toggleEmail(false));
